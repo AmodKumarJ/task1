@@ -1,50 +1,112 @@
 import React, { useState, useEffect } from 'react';
-import { getObject, updateObject } from '../service/api';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
 
-const UpdateObject = ({ id }) => {
+const UpdateObject = () => {
+  const { id } = useParams();
   const [name, setName] = useState('');
-  const [data, setData] = useState('');
+  const [year, setYear] = useState('');
+  const [price, setPrice] = useState('');
+  const [cpuModel, setCpuModel] = useState('');
+  const [hardDiskSize, setHardDiskSize] = useState('');
 
   useEffect(() => {
-    const fetchObject = async () => {
-      try {
-        const response = await getObject(id);
-        setName(response.data.name);
-        setData(JSON.stringify(response.data.data));
-      } catch (error) {
-        console.error('Error fetching object:', error);
-      }
-    };
-    fetchObject();
-  }, [id]);
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(`https://api.restful-api.dev/objects/${id}`);
+      const object = response.data;
+      setName(object.name);
+      setYear(object.data.year.toString());
+      setPrice(object.data.price.toString());
+      setCpuModel(object.data["CPU model"]);
+      setHardDiskSize(object.data["Hard disk size"]);
+    } catch (error) {
+      console.error('Error fetching object:', error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const updatedObject = {
+      name,
+      data: {
+        year: parseInt(year),
+        price: parseFloat(price),
+        "CPU model": cpuModel,
+        "Hard disk size": hardDiskSize,
+      },
+    };
+
     try {
-      await updateObject(id, { name, data: JSON.parse(data) });
+      await axios.put(`https://api.restful-api.dev/objects/${id}`, updatedObject);
+      alert('Object updated successfully');
+      window.location.href = '/';
     } catch (error) {
       console.error('Error updating object:', error);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <div>
       <h2>Update Object</h2>
-      <input
-        type="text"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-      />
-      <textarea
-        placeholder="Data (JSON format)"
-        value={data}
-        onChange={(e) => setData(e.target.value)}
-        required
-      />
-      <button type="submit">Update</button>
-    </form>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Name:
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </label>
+        <br />
+        <label>
+          Year:
+          <input
+            type="number"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            required
+          />
+        </label>
+        <br />
+        <label>
+          Price:
+          <input
+            type="number"
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+        </label>
+        <br />
+        <label>
+          CPU Model:
+          <input
+            type="text"
+            value={cpuModel}
+            onChange={(e) => setCpuModel(e.target.value)}
+            required
+          />
+        </label>
+        <br />
+        <label>
+          Hard Disk Size:
+          <input
+            type="text"
+            value={hardDiskSize}
+            onChange={(e) => setHardDiskSize(e.target.value)}
+            required
+          />
+        </label>
+        <br />
+        <button type="submit">Update</button>
+      </form>
+    </div>
   );
 };
 
